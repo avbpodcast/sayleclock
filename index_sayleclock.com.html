@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Say-Le-clock | Bitcoin Live Counter with Sound</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap');
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1E2022, #404040);
+            color: #D9D9D9;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1em;
+            transition: background 1s ease, color 1s ease;
+            overflow: auto;
+        }
+        body.light-theme {
+            background: linear-gradient(45deg, #E0EAFC, #CFDEF3);
+            color: #333333;
+            font-family: 'Roboto', sans-serif;
+        }
+        body.pizzaday-theme {
+            background: #f8dd93;
+            color: #e64545;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        body.genesis-block-theme {
+            background: #001f00;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        body.light-theme .ticker,
+        body.light-theme .result,
+        body.light-theme .block-number,
+        body.light-theme .block-counter,
+        body.light-theme .time,
+        body.light-theme .sound-toggle,
+        body.light-theme .theme-toggle,
+        body.light-theme .footer-content,
+        body.light-theme .footer-links a {
+            color: #333333;
+        }
+        body.light-theme .usd-price,
+        body.light-theme #bitcoin-price-eur {
+            color: #333333;
+            animation: float 3s ease-in-out infinite;
+            text-shadow: none;
+        }
+        .container {
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+        .ticker {
+            font-size: 1.92em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #FFB81C;
+            font-family: 'Montserrat', sans-serif;
+        }
+        body.light-theme .ticker {
+            color: #006400;
+        }
+        .result {
+            font-weight: bold;
+            color: #4A90E2;
+        }
+        .block-number {
+            margin-top: 20px;
+            font-size: 1.6em;
+            background-color: rgba(255, 184, 28, 0.1);
+            color: #FFB81C;
+            padding: 12px 20px;
+            border: 2px solid rgba(255, 184, 28, 0.3);
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        body.light-theme .block-number {
+            background-color: rgba(0, 100, 0, 0.1);
+            color: #006400;
+            border: 2px solid rgba(0, 100, 0, 0.3);
+        }
+        .block-number:hover {
+            background-color: rgba(255, 184, 28, 0.2);
+        }
+        body.light-theme .block-number:hover {
+            background-color: rgba(0, 100, 0, 0.2);
+        }
+        .block-number .bitcoin-symbol {
+            margin-right: 8px;
+            font-family: 'Arial', 'Segoe UI Symbol', sans-serif;
+        }
+        .block-number .block-text {
+            margin-right: 8px;
+        }
+        .block-number .new-tab-icon {
+            width: 14px;
+            height: 14px;
+            color: #87ceeb;
+        }
+        .block-number .new-tab-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+        .block-number .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.4em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .block-number .tooltip {
+            color: #fff;
+        }
+        .block-number:hover .tooltip {
+            opacity: 1;
+        }
+        .usd-price, #bitcoin-price-eur {
+            margin-left: 10px;
+            font-size: 1.92em;
+            font-family: 'Montserrat', sans-serif;
+            animation: float 3s ease-in-out infinite;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+        .usd-price.black, #bitcoin-price-eur.black {
+            color: #000000;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.3);
+            animation: float 3s ease-in-out infinite, glow-black 1.5s ease-in-out infinite alternate;
+        }
+        .usd-price.white, #bitcoin-price-eur.white {
+            color: #FFFFFF;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.3);
+            animation: float 3s ease-in-out infinite, glow-white 1.5s ease-in-out infinite alternate;
+        }
+        .usd-price.dark-orange, #bitcoin-price-eur.dark-orange {
+            color: #C75C00;
+            text-shadow: 0 0 5px rgba(255, 184, 28, 0.5), 0 0 10px rgba(255, 184, 28, 0.3);
+            animation: float 3s ease-in-out infinite, glow-orange 1.5s ease-in-out infinite alternate;
+        }
+        .usd-price.dark-grey, #bitcoin-price-eur.dark-grey {
+            color: #4A4A4A;
+            text-shadow: 0 0 5px rgba(217, 217, 217, 0.5), 0 0 10px rgba(217, 217, 217, 0.3);
+            animation: float 3s ease-in-out infinite, glow-grey 1.5s ease-in-out infinite alternate;
+        }
+        body:not(.light-theme) .usd-price,
+        body:not(.light-theme) #bitcoin-price-eur {
+        }
+        .block-counter .price-change-indicator {
+            margin-left: 50px;
+            margin-top: 0;
+            position: relative;
+        }
+        .block-counter .price-change-indicator::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .block-counter .price-change-indicator::before {
+            color: #fff;
+        }
+        .block-counter .price-change-indicator:hover::before {
+            opacity: 1;
+        }
+        .price-change-indicator {
+            width: 12px;
+            height: 12px;
+            margin-left: 15px;
+            position: relative;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #999;
+            border-radius: 50%;
+            cursor: auto;
+        }
+        .price-change-indicator.up {
+            color: #00ff00;
+            background-color: transparent;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .price-change-indicator.down {
+            color: #ff0000;
+            background-color: transparent;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .price-change-indicator.neutral {
+            background-color: #999;
+            border-radius: 50%;
+        }
+        .theme-toggle .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .theme-toggle .tooltip {
+            color: #fff;
+        }
+        .theme-toggle:hover .tooltip {
+            opacity: 1;
+        }
+        .offline-indicator {
+            color: red;
+            font-size: 0.9em;
+            margin-left: 10px;
+            display: none;
+        }
+        .offline-indicator.visible {
+            display: inline;
+        }
+        .offline-indicator .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .offline-indicator .tooltip {
+            color: #fff;
+        }
+        .offline-indicator:hover .tooltip {
+            opacity: 1;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        .time {
+            margin-top: 20px;
+            font-size: 0.72em;
+            font-family: 'Courier New', Courier, monospace;
+            color: #999999;
+        }
+        body.light-theme .time {
+            color: #4A4A4A;
+        }
+        .toggles-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 2;
+        }
+        .sound-toggle, .theme-toggle, .music-toggle {
+            width: 60px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #D9D9D9;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-left: 5px;
+            position: relative;
+        }
+        body.light-theme .sound-toggle,
+        body.light-theme .theme-toggle,
+        body.light-theme .music-toggle {
+            border: 2px solid #4A4A4A;
+        }
+        .sound-toggle.muted {
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        .sound-toggle:hover, .theme-toggle:hover, .music-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .sound-toggle .tooltip, .theme-toggle .tooltip, .music-toggle .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .sound-toggle .tooltip,
+        body.light-theme .theme-toggle .tooltip,
+        body.light-theme .music-toggle .tooltip {
+            color: #fff;
+        }
+        .sound-toggle:hover .tooltip, .theme-toggle:hover .tooltip, .music-toggle:hover .tooltip {
+            opacity: 1;
+        }
+        .theme-toggle {
+            background: linear-gradient(to right, white 50%, black 50%);
+        }
+        .theme-toggle.light-theme {
+            background: linear-gradient(to right, black 50%, white 50%);
+        }
+        .theme-toggle.pizzaday-theme {
+            background: linear-gradient(to right, #f8dd93 50%, #e64545 50%);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .theme-toggle.genesis-block-theme {
+            background: linear-gradient(to right, #001f00 50%, #00ff00 50%);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .music-toggle.playing {
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        @keyframes glow-black {
+            from { text-shadow: 0 0 3px rgba(255, 255, 255, 0.4), 0 0 6px rgba(255, 255, 255, 0.2); }
+            to { text-shadow: 0 0 6px rgba(255, 255, 255, 0.6), 0 0 12px rgba(255, 255, 255, 0.4); }
+        }
+        @keyframes glow-white {
+            from { text-shadow: 0 0 3px rgba(0, 0, 0, 0.4), 0 0 6px rgba(0, 0, 0, 0.2); }
+            to { text-shadow: 0 0 6px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 0, 0, 0.4); }
+        }
+        @keyframes glow-orange {
+            from { text-shadow: 0 0 3px rgba(255, 184, 28, 0.4), 0 0 6px rgba(255, 184, 28, 0.2); }
+            to { text-shadow: 0 0 6px rgba(255, 184, 28, 0.6), 0 0 12px rgba(255, 184, 28, 0.4); }
+        }
+        @keyframes glow-grey {
+            from { text-shadow: 0 0 3px rgba(217, 217, 217, 0.4), 0 0 6px rgba(217, 217, 217, 0.2); }
+            to { text-shadow: 0 0 6px rgba(217, 217, 217, 0.6), 0 0 12px rgba(217, 217, 217, 0.4); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes celebrateGlow {
+            0% { text-shadow: 0 0 5px #FFB81C, 0 0 10px #FFB81C; }
+            50% { text-shadow: 0 0 10px #FFB81C, 0 0 20px #FF4500; }
+            100% { text-shadow: 0 0 5px #FFB81C, 0 0 10px #FFB81C; }
+        }
+        body.light-theme @keyframes celebrateGlow {
+            0% { text-shadow: 0 0 5px #006400, 0 0 10px #006400; }
+            50% { text-shadow: 0 0 10px #006400, 0 0 20px #004d00; }
+            100% { text-shadow: 0 0 5px #006400, 0 0 10px #006400; }
+        }
+        .footer-content {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        .footer-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .footer-links a, .footer-content .version {
+            font-size: 0.8em;
+        }
+        .footer-links a {
+            color: #4A90E2;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer-links a:hover {
+            color: #63B8FF;
+        }
+        .footer-content .version {
+            color: #FFB81C;
+            letter-spacing: 1px;
+            margin-left: 15px;
+            align-self: center;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        body.light-theme .footer-content .version {
+            color: #006400;
+        }
+        .log-icon {
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #87ceeb;
+            transition: color 0.3s ease;
+        }
+        .log-icon:hover {
+            color: #63B8FF;
+        }
+        .block-counter {
+            font-size: 1.1em;
+            color: #87ceeb;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: auto;
+        }
+        .block-counter .block-counter-text {
+            display: inline-block;
+            position: relative;
+            cursor: auto;
+        }
+        .block-counter .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+            cursor: auto;
+        }
+        body.light-theme .block-counter .tooltip {
+            color: #e5e2e2;
+        }
+        .block-counter:hover .tooltip {
+            opacity: 1;
+            cursor: auto;
+        }
+        .block-counter #blocks-passed-count {
+            margin-left: 5px;
+        }
+        .toggles-container > div[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .toggles-container > div[data-tooltip]::before {
+            color: #fff;
+        }
+        .toggles-container > div[data-tooltip]:hover::before {
+            opacity: 1;
+        }
+        .volume-regulator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            position: absolute;
+            bottom: -35px;
+            left: 145px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+            transform: translateY(15px);
+        }
+        .music-toggle.playing + .volume-regulator {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .volume-level {
+            width: 20px;
+            height: 20px;
+            margin: 0 2px;
+            border: 1px solid #D9D9D9;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+        body.light-theme .volume-level {
+            border: 1px solid #4A4A4A;
+        }
+        .volume-level:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .volume-regulator .volume-level::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .volume-regulator .volume-level::before {
+            color: #fff;
+        }
+        .volume-regulator .volume-level:hover::before {
+            opacity: 1;
+        }
+        .hide-buttons {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #D9D9D9;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-left: 5px;
+            font-size: 18px;
+            position: relative;
+        }
+        body.light-theme .hide-buttons {
+            border: 2px solid #4A4A4A;
+        }
+        .hide-buttons:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .hide-buttons .icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s ease;
+        }
+        .hide-buttons .icon.open {
+            opacity: 0;
+        }
+        .hide-buttons.closed .icon.close {
+            opacity: 0;
+        }
+        .hide-buttons.closed .icon.open {
+            opacity: 1;
+        }
+        .hide-buttons .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .hide-buttons .tooltip {
+            color: #fff;
+        }
+        .hide-buttons:hover .tooltip {
+            opacity: 1;
+        }
+        .toggles-container.hidden > div:not(.hide-buttons) {
+            display: none;
+        }
+        .price-buffer-log {
+            position: fixed;
+            left: 0;
+            right: 0;
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 0.8em;
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+            display: none; /* Hidden by default */
+            z-index: 10;
+        }
+        .price-buffer-log.visible {
+            display: block; /* Show when visible */
+            bottom: 0;
+        }
+        body.light-theme .price-buffer-log {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+        }
+        .close-log-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid #D9D9D9;
+            border-radius: 50%;
+            color: #D9D9D9;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .close-log-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #FFB81C;
+        }
+        body.light-theme .close-log-btn {
+            border: 2px solid #4A4A4A;
+            color: #4A4A4A;
+        }
+        body.light-theme .close-log-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #006400;
+        }
+        .buffer-section {
+            margin-bottom: 20px;
+        }
+        .buffer-section h3 {
+            color: #FFB81C;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        body.light-theme .buffer-section h3 {
+            color: #006400;
+        }
+        .buffer-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid #D9D9D9;
+        }
+        body.light-theme .buffer-table {
+            border: 1px solid #4A4A4A;
+        }
+        .buffer-table th, .buffer-table td {
+            padding: 8px;
+            border: 1px solid #D9D9D9;
+            text-align: left;
+        }
+        body.light-theme .buffer-table th,
+        body.light-theme .buffer-table td {
+            border: 1px solid #4A4A4A;
+        }
+        .buffer-table th {
+            background-color: rgba(255, 184, 28, 0.1);
+            color: #FFB81C;
+        }
+        body.light-theme .buffer-table th {
+            background-color: rgba(0, 100, 0, 0.1);
+            color: #006400;
+        }
+        .buffer-table td.source {
+            color: inherit;
+        }
+        .average-price {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+        .source-coingecko { color: #87ceeb; }
+        .source-blockchain { color: #90ee90; }
+        .source-binance { color: #ffffff; }
+        .source-bitstamp { color: #ffffe0; }
+        .source-kraken { color: #d3d3d3; }
+        .source-coinmarketcap { color: #ff69b4; }
+        body.light-theme .source-coingecko { color: #000000; }
+        body.light-theme .source-blockchain { color: #006400; }
+        body.light-theme .source-binance { color: #4A4A4A; }
+        body.light-theme .source-bitstamp { color: #808080; }
+        body.light-theme .source-kraken { color: #696969; }
+        body.light-theme .source-coinmarketcap { color: #c71585; }
+        .ath-celebration {
+            font-size: 1.5em;
+            color: #FFB81C;
+            animation: celebrateGlow 2s infinite;
+            padding: 10px;
+            border: 2px solid #FF4500;
+            border-radius: 8px;
+            background-color: rgba(255, 184, 28, 0.1);
+        }
+        body.light-theme .ath-celebration {
+            color: #006400;
+            border: 2px solid #004d00;
+            background-color: rgba(0, 100, 0, 0.1);
+        }
+        .crypto-compare-reference {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #87ceeb;
+            display: none;
+        }
+        body.light-theme .crypto-compare-reference {
+            color: #696969;
+        }
+        .fee-info {
+            font-size: 0.8em;
+            color: #FFB81C;
+            opacity: 0.7;
+            margin-top: 5px;
+            margin-left: 0;
+            position: relative;
+            text-align: center;
+        }
+        body.light-theme .fee-info {
+            color: #006400;
+        }
+        .fee-info::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.64em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 5px;
+        }
+        body.light-theme .fee-info::before {
+            color: #fff;
+        }
+        .fee-info:hover::before {
+            opacity: 1;
+        }
+        .fee-log {
+            margin-top: 20px;
+        }
+        .fee-log h3 {
+            color: #FFB81C;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        body.light-theme .fee-log h3 {
+            color: #006400;
+        }
+        .fee-log p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="toggles-container">
+        <div class="sound-toggle" id="sound-toggle" data-tooltip="Block height sound">ON</div>
+        <div class="theme-toggle" id="theme-toggle" data-tooltip="Switch theme"></div>
+        <div class="music-toggle" id="music-toggle" data-tooltip="Background music">▶</div>
+        <div class="hide-buttons" id="hide-buttons" data-tooltip="Toggle buttons visibility">
+            <span class="icon close">✖</span>
+            <span class="icon open">↑</span>
+        </div>
+        <div class="volume-regulator" id="volume-regulator">
+            <span class="volume-level" data-volume="5" data-tooltip="Low volume">L</span>
+            <span class="volume-level" data-volume="50" data-tooltip="Normal volume">N</span>
+            <span class="volume-level" data-volume="100" data-tooltip="Full volume">F</span>
+        </div>
+        <div class="offline-indicator" id="offline-indicator" data-tooltip="You're currently offline, functions may fail">offline</div>
+    </div>
+    <div class="container">
+        <div class="ticker" id="price-container">
+            <span class="usd-price floating-text" id="bitcoin-price-usd">Loading...</span>
+            <span id="bitcoin-price-eur" class="floating-text">€Loading...</span>
+        </div>
+        <div class="all-time-high" id="all-time-high">ATH: Loading...</div>
+        <div class="block-number" id="block-number">
+            <span class="bitcoin-symbol">₿</span>
+            <span class="block-text">timechain #Loading...</span>
+            <span class="new-tab-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 14H5V6h14v12z"/>
+                    <path d="M15 7h5v5h-2V9.41l-6.29 6.29-1.41-1.41L16.59 8H14V7z"/>
+                </svg>
+            </span>
+            <span class="tooltip">Open mempool.space in new tab</span>
+        </div>
+        <div class="block-counter" id="block-counter">
+            <span class="block-counter-text">tick-tock: <span id="blocks-passed-count">0</span></span>
+            <span class="tooltip" data-tooltip="blocks passed since page load">blocks passed since page load</span>
+            <span class="price-change-indicator" data-tooltip="Price change"></span>
+        </div>
+        <div class="fee-info" id="fee-info" data-tooltip="Avg tx fee">tx fee: <span id="fee-avg">Loading...</span></div>
+        <div class="fee-info" id="bitcoin-30d-lh" data-tooltip="Last 30 days low/high USD price">30d. L/H: Loading...</div>
+        <div class="time" id="current-time">Loading...</div>
+    </div>
+    <audio id="block-sound" src="https://archive.org/download/water1_202503/water1.mp3"></audio>
+    <audio id="saylor1-sound" src="https://archive.org/download/tone-4-1/saylor1.mp3"></audio>
+    <audio id="saylor2-sound" src="https://archive.org/download/tone-4-1/saylor2.mp3"></audio>
+    <audio id="saylor3-sound" src="https://archive.org/download/tone-4-1/saylor3.mp3"></audio>
+    <audio id="saylor4-sound" src="https://archive.org/download/tone-4-1/saylor4.mp3"></audio>
+    <audio id="saylor5-sound" src="https://archive.org/download/tone-4-1/saylor5.mp3"></audio>
+    <audio id="saylor6-sound" src="https://archive.org/download/tone-6/saylor6.mp3"></audio>
+    <audio id="tone1-sound" src="https://archive.org/download/tone-4-1/tone1.mp3"></audio>
+    <audio id="tone2-sound" src="https://archive.org/download/tone-4-1/tone2.mp3"></audio>
+    <audio id="tone3-sound" src="https://archive.org/download/tone-4-1/tone3.mp3"></audio>
+    <audio id="tone4-sound" src="https://archive.org/download/tone-4-1/tone4.mp3"></audio>
+    <audio id="jack1-sound" src="https://archive.org/download/jack1_202502/jack1.mp3"></audio>
+    <audio id="trump1-sound" src="https://archive.org/download/trump1/trump1.mp3"></audio>
+    <div id="youtube-player"></div>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="https://coinos.io/pay/allesvoorbitcoin">Donate</a>
+                <a href="https://allesvoorbitcoin.be/members/bbmi/">🍔</a>
+                <a href="https://allesvoorbitcoin.be/">Home</a>
+                <p class="version">v. 21.3.0 <span id="log-icon" class="log-icon">📜</span></p>
+            </div>
+        </div>
+    </footer>
+    <hr>
+    <div id="recent-price-info" class="price-buffer-log">
+        <button id="close-log" class="close-log-btn">✖</button>
+        <div class="buffer-section" id="usd-buffer">
+            <h3>USD Price Buffer</h3>
+            <table class="buffer-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Price (USD)</th>
+                        <th>Timestamp (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody id="usd-buffer-body"></tbody>
+            </table>
+            <div class="fee-log" id="fee-log">
+                <h3>Transaction Fee Log</h3>
+                <div id="fee-log-entries"></div>
+            </div>
+            <div class="average-price" id="usd-average">Average USD Price: $0</div>
+        </div>
+        <div class="buffer-section" id="eur-buffer">
+            <h3>EUR Price Buffer</h3>
+            <table class="buffer-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Price (EUR)</th>
+                        <th>Timestamp (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody id="eur-buffer-body"></tbody>
+            </table>
+            <div class="average-price" id="eur-average">Average EUR Price: €0</div>
+        </div>
+        <div class="crypto-compare-reference" id="crypto-compare-reference">
+            CryptoCompare Reference: $<span id="crypto-compare-usd">N/A</span> | €<span id="crypto-compare-eur">N/A</span>
+        </div>
+    </div>
+    <!-- Audio elements for new sound effects -->
+    <audio id="price-up-sound" src="https://archive.org/download/ATHalmostthere/price_up.mp3"></audio>
+    <audio id="price-down-sound" src="https://archive.org/download/ATHalmostthere/price_down.mp3"></audio>
+    <audio id="swing-down-sound" src="https://archive.org/download/ATHalmostthere/swing_down2.mp3"></audio>
+    <audio id="nice-move-up-sound" src="https://archive.org/download/ATHalmostthere/nicemoveup.mp3"></audio>
+    <audio id="ath-near-sound" src="https://archive.org/download/ATHalmostthere/ATH_near.mp3"></audio>
+    <audio id="ath-almost-there-sound" src="https://archive.org/download/ATHalmostthere/ATHalmostthere.mp3"></audio>
+    <audio id="ath-reached-sound" src="https://archive.org/download/ATHalmostthere/ATH_reached2.mp3"></audio>
+    <audio id="cheap-bitcoin-sound" src="https://archive.org/download/ATHalmostthere/cheapbitcointoday.mp3"></audio>
+
+    <script>
+        let lastBlockNumber = null;
+        let allTimeHigh = 108000;
+        let blocksPassed = 0;
+        let initialBtcPriceUsd = null;
+        let firstBlockFound = false;
+        let isPlaying = false;
+        let player;
+        let currentVolume = 50;
+
+        let usdPriceBuffer = [];
+        let eurPriceBuffer = [];
+        let cryptoCompareUsdPrice = 'N/A';
+        let cryptoCompareEurPrice = 'N/A';
+
+        let usdFetchCount = 0;
+        let eurFetchCount = 0;
+
+        const usdPriceSources = [
+            { name: 'CoinGecko', fetch: fetchCoinGeckoPriceUSD },
+            { name: 'Blockchain', fetch: fetchBlockchainPriceUSD },
+            { name: 'Binance', fetch: fetchBinancePriceUSD },
+            { name: 'Bitstamp', fetch: fetchBitstampPriceUSD }
+        ];
+
+        const eurPriceSources = [
+            { name: 'CoinGecko', fetch: fetchCoinGeckoPriceEUR },
+            { name: 'Blockchain', fetch: fetchBlockchainPriceEUR },
+            { name: 'Kraken', fetch: fetchKrakenPriceEUR }
+        ];
+
+        let usdSourceIndex = 0;
+        let eurSourceIndex = 0;
+        const tenMinutes = 10 * 60 * 1000;
+        let usdStartTime = null;
+        let eurStartTime = null;
+
+        let lastAthTriggerTime = 0;
+        const athCooldown = 60 * 60 * 1000;
+        const celebrationDuration = 30 * 60 * 1000;
+        let isCelebrating = false;
+        let celebrationTimeout = null;
+        let normalIntervalIdUsd = null;
+        let normalIntervalIdEur = null;
+        let celebrationIntervalId = null;
+
+        let lastFeeAvg = null;
+        let initialFetchCount = 0;
+        let totalFeeChecks = 0;
+        let lastFeeUpdateTime = 0;
+        let useBlockstreamSource = true; // Start with Blockstream.info, alternate with Mempool.space
+
+        document.getElementById('hide-buttons').addEventListener('click', function() {
+            const togglesContainer = document.querySelector('.toggles-container');
+            const hideButton = document.getElementById('hide-buttons');
+            togglesContainer.classList.toggle('hidden');
+            hideButton.classList.toggle('closed');
+        });
+
+function updateTime() {
+    const now = new Date();
+    const utcTime = now.toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    const startDate = new Date('2009-01-03T00:00:00Z'); // Fixed time format
+    const annoSatoshi = now.getUTCFullYear() - startDate.getUTCFullYear();
+    document.getElementById('current-time').textContent = `${utcTime} UTC, Anno Satoshi ${annoSatoshi}`;
+}
+
+        function toggleSound() {
+            const soundToggle = document.getElementById('sound-toggle');
+            const isMuted = soundToggle.classList.toggle('muted');
+            soundToggle.textContent = isMuted ? 'OFF' : 'ON';
+            localStorage.setItem('soundMuted', isMuted);
+        }
+
+        function toggleTheme() {
+            const isPizzaday = isPizzadayToday();
+            const isGenesisBlock = isGenesisBlockActive();
+            if (isPizzaday) {
+                setTheme('pizzaday-theme');
+            } else if (isGenesisBlock) {
+                setTheme('genesis-block-theme');
+            } else {
+                document.body.classList.toggle('light-theme');
+                document.getElementById('theme-toggle').classList.toggle('light-theme');
+                updatePriceColor();
+            }
+        }
+
+        function setTheme(theme) {
+            document.body.className = theme;
+            document.getElementById('theme-toggle').className = `theme-toggle ${theme}`;
+            updatePriceColor();
+        }
+
+        function isPizzadayToday() {
+            const now = new Date();
+            return now.getUTCMonth() === 2 && now.getUTCDate() === 22;
+        }
+
+        function isGenesisBlockActive() {
+            const now = new Date();
+            const startTime = new Date(now.getUTCFullYear(), 0, 3, 13, 0);
+            const endTime = new Date(now.getUTCFullYear(), 0, 4, 13, 0);
+            return now >= startTime && now < endTime;
+        }
+
+        async function fetchAllTimeHigh() {
+            try {
+                const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin');
+                const cgData = await cgResponse.json();
+                const cgAth = cgData.market_data.ath.usd;
+                const bsAth = cgAth;
+                allTimeHigh = Math.ceil((cgAth + bsAth) / 2);
+                if (allTimeHigh < 108000) allTimeHigh = 108000;
+                localStorage.setItem('allTimeHigh', allTimeHigh);
+                showAllTimeHighIfNear(getAveragePrice(usdPriceBuffer));
+            } catch (error) {
+                console.error('Error fetching all-time high:', error);
+                allTimeHigh = 108000;
+            }
+        }
+
+        async function fetchCryptoComparePrice(currency) {
+            try {
+                const response = await fetch('https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD,EUR');
+                const data = await response.json();
+                if (currency === 'USD') {
+                    cryptoCompareUsdPrice = Math.ceil(data.USD);
+                    document.getElementById('crypto-compare-usd').textContent = cryptoCompareUsdPrice;
+                    return cryptoCompareUsdPrice;
+                } else {
+                    cryptoCompareEurPrice = Math.ceil(data.EUR);
+                    document.getElementById('crypto-compare-eur').textContent = cryptoCompareEurPrice;
+                    return cryptoCompareEurPrice;
+                }
+            } catch (error) {
+                console.error(`Error fetching CryptoCompare ${currency} price:`, error);
+                return null;
+            }
+        }
+
+        async function fetchWithFallback(url, processData, currency, sourceName) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await response.json();
+                processData(data);
+            } catch (error) {
+                console.error(`Error fetching ${sourceName} ${currency} price:`, error);
+                console.log(`Falling back to CryptoCompare for ${currency}...`);
+                const fallbackPrice = await fetchCryptoComparePrice(currency);
+                if (fallbackPrice !== null) {
+                    updatePriceBuffer(currency, fallbackPrice, 'CryptoCompare');
+                } else {
+                    console.error(`CryptoCompare fallback failed for ${currency}`);
+                }
+            }
+        }
+
+        async function fetchCoinGeckoPriceUSD() {
+            await fetchWithFallback(
+                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+                data => {
+                    const usdPrice = Math.ceil(data.bitcoin.usd);
+                    updatePriceBuffer('USD', usdPrice, 'CoinGecko');
+                },
+                'USD',
+                'CoinGecko'
+            );
+        }
+
+        async function fetchBlockchainPriceUSD() {
+            await fetchWithFallback(
+                'https://blockchain.info/ticker',
+                data => {
+                    const usdPrice = Math.ceil(data.USD.last);
+                    updatePriceBuffer('USD', usdPrice, 'Blockchain');
+                },
+                'USD',
+                'Blockchain'
+            );
+        }
+
+        async function fetchBinancePriceUSD() {
+            await fetchWithFallback(
+                'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',
+                data => {
+                    const usdPrice = Math.ceil(parseFloat(data.price));
+                    updatePriceBuffer('USD', usdPrice, 'Binance');
+                },
+                'USD',
+                'Binance'
+            );
+        }
+
+        async function fetchBitstampPriceUSD() {
+            await fetchWithFallback(
+                'https://www.bitstamp.net/api/v2/ticker/btcusd/',
+                data => {
+                    const usdPrice = Math.ceil(parseFloat(data.last));
+                    updatePriceBuffer('USD', usdPrice, 'Bitstamp');
+                },
+                'USD',
+                'Bitstamp'
+            );
+        }
+
+        async function fetchCoinGeckoPriceEUR() {
+            await fetchWithFallback(
+                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur',
+                data => {
+                    const eurPrice = Math.ceil(data.bitcoin.eur);
+                    updatePriceBuffer('EUR', eurPrice, 'CoinGecko');
+                },
+                'EUR',
+                'CoinGecko'
+            );
+        }
+
+        async function fetchBlockchainPriceEUR() {
+            await fetchWithFallback(
+                'https://blockchain.info/ticker',
+                data => {
+                    const eurPrice = Math.ceil(data.EUR.last);
+                    updatePriceBuffer('EUR', eurPrice, 'Blockchain');
+                },
+                'EUR',
+                'Blockchain'
+            );
+        }
+
+        async function fetchKrakenPriceEUR() {
+            await fetchWithFallback(
+                'https://api.kraken.com/0/public/Ticker?pair=XBTEUR',
+                data => {
+                    const eurPrice = Math.ceil(parseFloat(data.result.XXBTZEUR.c[0]));
+                    updatePriceBuffer('EUR', eurPrice, 'Kraken');
+                },
+                'EUR',
+                'Kraken'
+            );
+        }
+
+        function updatePriceBuffer(currency, price, source) {
+            const buffer = currency === 'USD' ? usdPriceBuffer : eurPriceBuffer;
+            const fetchCount = currency === 'USD' ? usdFetchCount++ : eurFetchCount++;
+            const startTime = currency === 'USD' ? usdStartTime : eurStartTime;
+            const elapsedTime = startTime ? Date.now() - startTime : 0;
+
+            if (currency === 'USD' && price > allTimeHigh) {
+                const now = Date.now();
+                if (now - lastAthTriggerTime >= athCooldown && !isCelebrating) {
+                    console.log(`New ATH detected: $${price} > $${allTimeHigh}`);
+                    allTimeHigh = price;
+                    localStorage.setItem('allTimeHigh', allTimeHigh);
+                    lastAthTriggerTime = now;
+                    startAthCelebration(price);
+                }
+            }
+
+            if (fetchCount % 3 === 0 && buffer.length > 0 && !isCelebrating) {
+                const currentAvg = getAveragePrice(buffer);
+                const diffPercent = Math.abs((price - currentAvg) / currentAvg) * 100;
+                if (diffPercent > 0.2) {
+                    console.log(`${currency} price deviation > 0.2% detected: ${price} vs avg ${currentAvg}`);
+                    buffer.length = 0;
+                    buffer.push({ price, timestamp: Date.now(), source });
+                    document.getElementById('crypto-compare-reference').style.display = 'block';
+                    if (currency === 'USD') {
+                        cryptoCompareUsdPrice = price;
+                        document.getElementById('crypto-compare-usd').textContent = cryptoCompareUsdPrice;
+                    } else {
+                        cryptoCompareEurPrice = price;
+                        document.getElementById('crypto-compare-eur').textContent = cryptoCompareEurPrice;
+                    }
+                    updatePriceDisplay();
+                    return;
+                } else {
+                    document.getElementById('crypto-compare-reference').style.display = 'none';
+                }
+            }
+
+            if (!isCelebrating) {
+                if (elapsedTime < tenMinutes && buffer.length < 5) {
+                    buffer.push({ price, timestamp: Date.now(), source });
+                } else if (elapsedTime >= tenMinutes) {
+                    if (buffer.length >= 5) buffer.shift();
+                    buffer.push({ price, timestamp: Date.now(), source });
+                }
+            } else {
+                if (buffer.length >= 5) buffer.shift();
+                buffer.push({ price, timestamp: Date.now(), source });
+            }
+
+            updatePriceDisplay();
+        }
+
+        function getAveragePrice(buffer) {
+            if (buffer.length === 0) return 0;
+            const sum = buffer.reduce((acc, entry) => acc + entry.price, 0);
+            return Math.ceil(sum / buffer.length);
+        }
+
+        function updatePriceDisplay() {
+            const avgUsd = getAveragePrice(usdPriceBuffer);
+            const avgEur = getAveragePrice(eurPriceBuffer);
+
+            document.getElementById('bitcoin-price-usd').textContent = `$${avgUsd}`;
+            document.getElementById('bitcoin-price-eur').textContent = `€${avgEur}`;
+
+            function formatTime(timestamp) {
+                const date = new Date(timestamp);
+                const hours = date.getUTCHours().toString().padStart(2, '0');
+                const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+                const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+            }
+
+            const usdBody = document.getElementById('usd-buffer-body');
+            usdBody.innerHTML = '';
+            usdPriceBuffer.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="source source-${entry.source.toLowerCase()}">${entry.source}</td>
+                    <td>$${entry.price}</td>
+                    <td>${formatTime(entry.timestamp)}</td>
+                `;
+                usdBody.appendChild(row);
+            });
+            document.getElementById('usd-average').textContent = `Average USD Price: $${avgUsd}`;
+
+            const eurBody = document.getElementById('eur-buffer-body');
+            eurBody.innerHTML = '';
+            eurPriceBuffer.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="source source-${entry.source.toLowerCase()}">${entry.source}</td>
+                    <td>€${entry.price}</td>
+                    <td>${formatTime(entry.timestamp)}</td>
+                `;
+                eurBody.appendChild(row);
+            });
+            document.getElementById('eur-average').textContent = `Average EUR Price: €${avgEur}`;
+
+            if (initialBtcPriceUsd === null && avgUsd > 0) initialBtcPriceUsd = avgUsd;
+            updatePriceChangeIndicator(avgUsd);
+            showAllTimeHighIfNear(avgUsd);
+            updatePriceColor();
+        }
+
+        function startAthCelebration(newAthPrice) {
+            isCelebrating = true;
+            usdPriceBuffer = [{ price: newAthPrice, timestamp: Date.now(), source: 'New ATH' }];
+            eurPriceBuffer = [];
+            usdStartTime = Date.now();
+            eurStartTime = Date.now();
+
+            const athElement = document.getElementById('all-time-high');
+            athElement.classList.add('ath-celebration');
+            athElement.textContent = `New All-Time High: $${newAthPrice}!`;
+            athElement.style.display = 'block';
+
+            if (normalIntervalIdUsd) clearInterval(normalIntervalIdUsd);
+            if (normalIntervalIdEur) clearInterval(normalIntervalIdEur);
+
+            celebrationIntervalId = setInterval(() => {
+                usdPriceSources.forEach(source => source.fetch());
+                eurPriceSources.forEach(source => source.fetch());
+            }, 60 * 1000);
+
+            celebrationTimeout = setTimeout(() => {
+                endAthCelebration();
+            }, celebrationDuration);
+        }
+
+        function endAthCelebration() {
+            isCelebrating = false;
+            clearInterval(celebrationIntervalId);
+            clearTimeout(celebrationTimeout);
+
+            const athElement = document.getElementById('all-time-high');
+            athElement.classList.remove('ath-celebration');
+            showAllTimeHighIfNear(getAveragePrice(usdPriceBuffer));
+            updatePriceColor();
+
+            startPriceUpdates();
+        }
+
+        function startPriceUpdates() {
+            if (isCelebrating) return;
+
+            usdStartTime = Date.now();
+            eurStartTime = Date.now();
+
+            usdPriceSources[usdSourceIndex].fetch();
+            eurPriceSources[eurSourceIndex].fetch();
+
+            normalIntervalIdUsd = setInterval(() => {
+                if (!isCelebrating) {
+                    const elapsed = Date.now() - usdStartTime;
+                    if (elapsed < tenMinutes && usdPriceBuffer.length < 5) {
+                        usdSourceIndex = (usdSourceIndex + 1) % usdPriceSources.length;
+                        usdPriceSources[usdSourceIndex].fetch();
+                    } else if (elapsed >= tenMinutes) {
+                        usdSourceIndex = (usdSourceIndex + 1) % usdPriceSources.length;
+                        usdPriceSources[usdSourceIndex].fetch();
+                    }
+                }
+            }, 90 * 1000);
+
+            normalIntervalIdEur = setInterval(() => {
+                if (!isCelebrating) {
+                    const elapsed = Date.now() - eurStartTime;
+                    if (elapsed < tenMinutes && eurPriceBuffer.length < 5) {
+                        eurSourceIndex = (eurSourceIndex + 1) % eurPriceSources.length;
+                        eurPriceSources[eurSourceIndex].fetch();
+                    } else if (elapsed >= tenMinutes) {
+                        eurSourceIndex = (eurSourceIndex + 1) % eurPriceSources.length;
+                        eurPriceSources[eurSourceIndex].fetch();
+                    }
+                }
+            }, 180 * 1000);
+
+            function timeToNextQuarterHour() {
+                const now = new Date();
+                const minutes = now.getUTCMinutes();
+                const seconds = now.getUTCSeconds();
+                const milliseconds = now.getUTCMilliseconds();
+
+                const minutesToNext = (15 - (minutes % 15)) % 15 || 15;
+                const secondsRemaining = (60 - seconds) % 60;
+                const msRemaining = 1000 - milliseconds;
+
+                return (minutesToNext * 60 * 1000) + (secondsRemaining * 1000) + msRemaining;
+            }
+
+            function scheduleQuarterHourFetch() {
+                const delay = timeToNextQuarterHour();
+                setTimeout(() => {
+                    if (!isCelebrating) {
+                        const now = new Date();
+                        const minutes = now.getUTCMinutes();
+                        const elapsedUsd = Date.now() - usdStartTime;
+                        const elapsedEur = Date.now() - eurStartTime;
+
+                        if ([0, 15, 30, 45].includes(minutes)) {
+                            usdSourceIndex = (usdSourceIndex + 1) % usdPriceSources.length;
+                            usdPriceSources[usdSourceIndex].fetch();
+                        }
+
+                        if ([0, 30].includes(minutes)) {
+                            eurSourceIndex = (eurSourceIndex + 1) % eurPriceSources.length;
+                            eurPriceSources[eurSourceIndex].fetch();
+                        }
+
+                        if (elapsedUsd >= tenMinutes && usdPriceBuffer.length >= 5) usdPriceBuffer.shift();
+                        if (elapsedEur >= tenMinutes && eurPriceBuffer.length >= 5) eurPriceBuffer.shift();
+                    }
+                    scheduleQuarterHourFetch();
+                }, delay);
+            }
+
+            scheduleQuarterHourFetch();
+        }
+
+        function showAllTimeHighIfNear(currentPrice) {
+            const allTimeHighElement = document.getElementById('all-time-high');
+            if (isCelebrating) return;
+
+            if (allTimeHigh === 0) {
+                allTimeHighElement.style.display = 'block';
+                allTimeHighElement.textContent = "Checking all-time-high...";
+                allTimeHighElement.style.color = '#87ceeb';
+            } else if (currentPrice >= allTimeHigh - 5000) {
+                allTimeHighElement.style.display = 'block';
+                allTimeHighElement.textContent = `ATH: $${allTimeHigh}`;
+                allTimeHighElement.style.color = '#D9D9D9';
+            } else {
+                allTimeHighElement.style.display = 'none';
+            }
+            if (document.body.classList.contains('light-theme')) {
+                allTimeHighElement.style.color = '#333333';
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const blockHeightResponse = await fetch('https://blockstream.info/api/blocks/tip/height');
+                const blockHeightData = await blockHeightResponse.json();
+                await updateBlockHeight(blockHeightData);
+            } catch (error) {
+                console.error('Error fetching block height:', error);
+            }
+        }
+
+        function updatePriceChangeIndicator(currentPrice) {
+            const priceChange = currentPrice - initialBtcPriceUsd;
+            const indicator = document.querySelector('.price-change-indicator');
+            indicator.className = 'price-change-indicator';
+            if (priceChange > 1) {
+                indicator.classList.add('up');
+                indicator.innerHTML = '▲';
+            } else if (priceChange < -1) {
+                indicator.classList.add('down');
+                indicator.innerHTML = '▼';
+            } else {
+                indicator.classList.add('neutral');
+                indicator.innerHTML = '';
+            }
+        }
+
+        async function updateBlockHeight(data) {
+            const blockHeight = data;
+            document.querySelector('.block-text').textContent = `timechain #${blockHeight}`;
+            if (lastBlockNumber && blockHeight > lastBlockNumber) {
+                blocksPassed++;
+                document.getElementById('blocks-passed-count').textContent = blocksPassed;
+                if (!firstBlockFound) firstBlockFound = true;
+                if (firstBlockFound) {
+                    const currentPrice = getAveragePrice(usdPriceBuffer);
+                    updatePriceChangeIndicator(currentPrice);
+                }
+                if (blocksPassed % 3 !== 0) playBlockSound();
+                if (blocksPassed % 3 === 0) playRandomSaylorSound();
+
+                if (initialFetchCount >= 8) {
+                    updateTransactionFee();
+                }
+            }
+            lastBlockNumber = blockHeight;
+        }
+
+        function playBlockSound() {
+            const blockSound = document.getElementById('block-sound');
+            const isMuted = document.getElementById('sound-toggle').classList.contains('muted');
+            if (!isMuted) {
+                blockSound.currentTime = 0;
+                blockSound.play().catch(error => {
+                    console.error('Error playing block sound:', error);
+                });
+            }
+        }
+
+        function playRandomSaylorSound() {
+            const saylorSounds = [
+                'saylor1-sound', 'saylor2-sound', 'saylor3-sound', 'saylor4-sound', 'saylor5-sound', 'saylor6-sound',
+                'tone1-sound', 'tone2-sound', 'tone3-sound', 'tone4-sound', 'jack1-sound', 'trump1-sound'
+            ];
+            const randomIndex = Math.floor(Math.random() * saylorSounds.length);
+            document.getElementById(saylorSounds[randomIndex]).play();
+        }
+
+        function updatePriceColor() {
+            const usdPrice = document.getElementById('bitcoin-price-usd');
+            const eurPrice = document.getElementById('bitcoin-price-eur');
+            const colors = ['black', 'white', 'dark-orange', 'dark-grey'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            usdPrice.className = `usd-price floating-text ${randomColor}`;
+            eurPrice.className = `floating-text ${randomColor}`;
+            if (!document.body.classList.contains('light-theme')) {
+                usdPrice.style.textShadow = '';
+                eurPrice.style.textShadow = '';
+            }
+        }
+
+        function checkOnlineStatus() {
+            const indicator = document.getElementById('offline-indicator');
+            if (navigator.onLine) indicator.classList.remove('visible');
+            else indicator.classList.add('visible');
+        }
+
+        async function updateTransactionFee() {
+            totalFeeChecks++; // Increment total fee checks
+            try {
+                let avgFeeSats, sourceName;
+
+                if (useBlockstreamSource) {
+                    const response = await fetch('https://blockstream.info/api/fee-estimates');
+                    const data = await response.json();
+                    avgFeeSats = Math.round(data['6']); // 6-block target (~1 hour)
+                    sourceName = 'Blockstream';
+                } else {
+                    const response = await fetch('https://mempool.space/api/v1/fees/recommended');
+                    const data = await response.json();
+                    avgFeeSats = Math.round(data.hourFee); // 1-hour target
+                    sourceName = 'Mempool';
+                }
+
+                if (avgFeeSats === 0 || isNaN(avgFeeSats)) {
+                    if (lastFeeAvg) {
+                        document.getElementById('fee-avg').textContent = lastFeeAvg;
+                        appendFeeLog(`${sourceName}: ${lastFeeAvg} (reverted)`);
+                        lastFeeUpdateTime = Date.now();
+                        useBlockstreamSource = !useBlockstreamSource; // Toggle source
+                        return;
+                    } else {
+                        throw new Error('Zero or NaN fee with no previous value');
+                    }
+                }
+
+                const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+                const priceData = await priceResponse.json();
+                const btcPrice = priceData.bitcoin.usd;
+
+                const satsToBtc = 0.00000001;
+                const avgFeeUsd = (avgFeeSats * satsToBtc) * btcPrice;
+
+                lastFeeAvg = avgFeeUsd > 2 ? `${avgFeeSats} sats ($${avgFeeUsd.toFixed(2)})` : `${avgFeeSats} sats`;
+                document.getElementById('fee-avg').textContent = lastFeeAvg;
+
+                appendFeeLog(`${sourceName}: ${lastFeeAvg}`);
+
+                lastFeeUpdateTime = Date.now();
+                useBlockstreamSource = !useBlockstreamSource; // Toggle source after successful fetch
+            } catch (error) {
+                console.error('Error updating transaction fee:', error);
+                if (lastFeeAvg) {
+                    document.getElementById('fee-avg').textContent = lastFeeAvg;
+                    appendFeeLog(`${useBlockstreamSource ? 'Blockstream' : 'Mempool'}: ${lastFeeAvg} (error fallback)`);
+                    useBlockstreamSource = !useBlockstreamSource; // Toggle source even on error
+                } else {
+                    document.getElementById('fee-avg').textContent = 'Error';
+                    appendFeeLog('Initial fetch failed');
+                }
+            }
+        }
+
+        async function initialFeeEstimate() {
+            try {
+                const response = await fetch('https://blockstream.info/api/fee-estimates');
+                const data = await response.json();
+                const avgFeeSats = Math.round(data['6']); // 6-block target (~1 hour)
+
+                if (avgFeeSats === 0 || isNaN(avgFeeSats)) {
+                    throw new Error('Initial fee calculation returned zero or NaN');
+                }
+
+                const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+                const priceData = await priceResponse.json();
+                const btcPrice = priceData.bitcoin.usd;
+
+                const satsToBtc = 0.00000001;
+                const avgFeeUsd = (avgFeeSats * satsToBtc) * btcPrice;
+
+                lastFeeAvg = avgFeeUsd > 2 ? `${avgFeeSats} sats ($${avgFeeUsd.toFixed(2)})` : `${avgFeeSats} sats`;
+                document.getElementById('fee-avg').textContent = lastFeeAvg;
+
+                appendFeeLog(`Blockstream: ${lastFeeAvg}`);
+
+                lastFeeUpdateTime = Date.now();
+            } catch (error) {
+                console.error('Error fetching initial fee estimate:', error);
+                document.getElementById('fee-avg').textContent = 'Error';
+                appendFeeLog('Initial fetch failed');
+            }
+        }
+
+        function appendFeeLog(message) {
+            const feeLogEntries = document.getElementById('fee-log-entries');
+            const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+            const entry = document.createElement('p');
+            entry.textContent = `${message} @ ${timestamp}`;
+            entry.style.color = '#87ceeb'; // Default dark theme color
+            if (document.body.classList.contains('light-theme')) {
+                entry.style.color = '#333333'; // Darker font for light theme
+            }
+            feeLogEntries.insertBefore(entry, feeLogEntries.firstChild);
+            while (feeLogEntries.children.length > 4) {
+                feeLogEntries.removeChild(feeLogEntries.lastChild);
+            }
+        }
+
+        // Function to fetch last 30 days Bitcoin USD price data from CryptoCompare
+        async function fetchBitcoin30DayLowHigh() {
+            try {
+                const endTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
+                const startTimestamp = endTimestamp - (30 * 24 * 60 * 60); // 30 days ago
+                const response = await fetch(`https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=30&toTs=${endTimestamp}`);
+                const data = await response.json();
+
+                if (data.Response !== 'Success') {
+                    throw new Error('Failed to fetch 30-day data from CryptoCompare');
+                }
+
+                const prices = data.Data.Data.map(entry => entry.close); // Use closing prices
+                const lowestPrice = Math.min(...prices).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                const highestPrice = Math.max(...prices).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+                document.getElementById('bitcoin-30d-lh').textContent = `30d. L/H: $${lowestPrice} / $${highestPrice}`;
+            } catch (error) {
+                console.error('Error fetching 30-day Bitcoin low/high:', error);
+                document.getElementById('bitcoin-30d-lh').textContent = `30d. L/H: Error`;
+            }
+        }
+
+        // Function to schedule updates at 13:00 and 23:00 UTC
+        function schedule30DayLowHighUpdates() {
+            function timeToNextUpdate() {
+                const now = new Date();
+                const utcHours = now.getUTCHours();
+                const utcMinutes = now.getUTCMinutes();
+                const utcSeconds = now.getUTCSeconds();
+                const utcMilliseconds = now.getUTCMilliseconds();
+
+                let targetHour;
+                if (utcHours < 13 || (utcHours === 13 && (utcMinutes > 0 || utcSeconds > 0 || utcMilliseconds > 0))) {
+                    targetHour = utcHours < 13 ? 13 : 23;
+                } else if (utcHours < 23 || (utcHours === 23 && (utcMinutes > 0 || utcSeconds > 0 || utcMilliseconds > 0))) {
+                    targetHour = 23;
+                } else {
+                    targetHour = 13; // Next day
+                }
+
+                const hoursToNext = (targetHour - utcHours + 24) % 24;
+                const minutesToNext = hoursToNext === 0 ? (60 - utcMinutes) % 60 : 60 - utcMinutes;
+                const secondsToNext = minutesToNext === 0 ? (60 - utcSeconds) % 60 : 60 - utcSeconds;
+                const msToNext = secondsToNext === 0 ? 1000 - utcMilliseconds : 1000 - utcMilliseconds;
+
+                return (hoursToNext * 3600000) + (minutesToNext * 60000) + (secondsToNext * 1000) + msToNext;
+            }
+
+            function updateAndReschedule() {
+                fetchBitcoin30DayLowHigh();
+                const delay = timeToNextUpdate();
+                setTimeout(updateAndReschedule, delay);
+            }
+
+            // Initial fetch and scheduling
+            fetchBitcoin30DayLowHigh();
+            const initialDelay = timeToNextUpdate();
+            setTimeout(updateAndReschedule, initialDelay);
+        }
+
+        document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+        document.getElementById('block-number').addEventListener('click', () => window.open('https://mempool.space', '_blank'));
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+        const soundMuted = localStorage.getItem('soundMuted') === 'true';
+        if (soundMuted) {
+            document.getElementById('sound-toggle').textContent = 'OFF';
+            document.getElementById('sound-toggle').classList.add('muted');
+        }
+
+        function setVolume(volume) {
+            if (player) {
+                player.setVolume(volume);
+                currentVolume = volume;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.volume-level').forEach(level => {
+                level.addEventListener('click', function() {
+                    const volume = parseInt(this.getAttribute('data-volume'));
+                    setVolume(volume);
+                });
+            });
+            fetchData();
+            updateTime();
+            fetchAllTimeHigh();
+            startPriceUpdates();
+            updatePriceColor();
+            schedule30DayLowHighUpdates(); // Start 30-day low/high updates
+
+            const logIcon = document.getElementById('log-icon');
+            const bufferLog = document.getElementById('recent-price-info');
+            const closeLogBtn = document.getElementById('close-log');
+
+            logIcon.addEventListener('click', function() {
+                if (bufferLog.style.display === 'block') {
+                    bufferLog.style.display = 'none';
+                } else {
+                    bufferLog.style.display = 'block';
+                    bufferLog.classList.add('visible');
+                }
+            });
+
+            closeLogBtn.addEventListener('click', function() {
+                bufferLog.style.display = 'none';
+                bufferLog.classList.remove('visible');
+            });
+
+            // Initial fee estimate on page load (Blockstream.info)
+            initialFeeEstimate();
+
+            // Schedule 8 initial fetches: first 4 at 2-min intervals, next 4 at 5-min intervals
+            const twoMinutes = 2 * 60 * 1000;
+            const fiveMinutes = 5 * 60 * 1000;
+
+            // First 4 checks at 2-minute intervals
+            for (let i = 1; i < 4; i++) {
+                setTimeout(() => {
+                    updateTransactionFee();
+                    initialFetchCount++;
+                }, i * twoMinutes);
+            }
+
+            // Next 4 checks at 5-minute intervals starting after 8 minutes
+            setTimeout(() => {
+                updateTransactionFee();
+                initialFetchCount++;
+                for (let i = 1; i < 4; i++) {
+                    setTimeout(() => {
+                        updateTransactionFee();
+                        initialFetchCount++;
+                        if (initialFetchCount === 8) {
+                            startBlockAndTimeBasedFeeUpdates();
+                        }
+                    }, i * fiveMinutes);
+                }
+            }, 4 * twoMinutes); // Start 5-min interval after 8 minutes
+        });
+
+        function startBlockAndTimeBasedFeeUpdates() {
+            const tenMinutes = 10 * 60 * 1000;
+            setInterval(() => {
+                if (Date.now() - lastFeeUpdateTime >= tenMinutes) {
+                    updateTransactionFee();
+                }
+            }, 60000); // Check every minute
+        }
+
+        function startBlockHeightUpdates() {
+            let lastUpdate = Date.now();
+
+            function updateLoop() {
+                const now = Date.now();
+                if (document.visibilityState === 'visible' && now - lastUpdate >= 30000) {
+                    fetchData();
+                    lastUpdate = now
+                                    }
+                requestAnimationFrame(updateLoop);
+            }
+
+            requestAnimationFrame(updateLoop);
+        }
+
+        fetchAllTimeHigh();
+        setInterval(updateTime, 1000);
+        startBlockHeightUpdates();
+        setInterval(checkOnlineStatus, 300000);
+        checkOnlineStatus();
+
+        if (isPizzadayToday() || isGenesisBlockActive()) toggleTheme();
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0',
+                width: '0',
+                videoId: 'YLlh-bt4HDA',
+                playerVars: {
+                    'autoplay': 0,
+                    'loop': 1,
+                    'playlist': 'YLlh-bt4HDA',
+                    'controls': 0,
+                    'disablekb': 1,
+                    'modestbranding': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onError': onPlayerError
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            console.log("Player is ready.");
+            const musicToggle = document.getElementById('music-toggle');
+            const volumeRegulator = document.getElementById('volume-regulator');
+            musicToggle.addEventListener('click', () => {
+                if (isPlaying) {
+                    player.pauseVideo();
+                    musicToggle.innerHTML = '▶';
+                    musicToggle.classList.remove('playing');
+                    volumeRegulator.style.opacity = '0';
+                    volumeRegulator.style.visibility = 'hidden';
+                } else {
+                    player.playVideo();
+                    player.unMute();
+                    musicToggle.innerHTML = '■';
+                    musicToggle.classList.add('playing');
+                    volumeRegulator.style.opacity = '1';
+                    volumeRegulator.style.visibility = 'visible';
+                }
+                isPlaying = !isPlaying;
+            });
+            document.querySelectorAll('.volume-level').forEach(level => {
+                level.addEventListener('click', function() {
+                    const volume = parseInt(this.getAttribute('data-volume'));
+                    player.setVolume(volume);
+                });
+            });
+        }
+
+        function onPlayerError(event) {
+            console.error("Player error:", event.data);
+        }
+    </script>
+    <script>
+        // Sound effect logic
+        let lastSoundCheckTime = 0;
+        let hasPlayedCheapBitcoin = false; // Track if cheapbitcointoday.mp3 has played
+        let isFirstSoundCheck = true; // Track if this is the first 5-minute check after page load
+        const soundCheckInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
+        const allTimeHighThreshold = 108500; // Initial ATH, updated by fetchAllTimeHigh
+
+        function playSound(audioId) {
+            const sound = document.getElementById(audioId);
+            const isMuted = document.getElementById('sound-toggle').classList.contains('muted');
+            if (!isMuted) {
+                sound.currentTime = 0;
+                sound.play().catch(error => {
+                    console.error(`Error playing sound ${audioId}:`, error);
+                });
+            }
+        }
+
+        function checkPriceForSounds() {
+            const now = new Date();
+            const minutes = now.getUTCMinutes();
+            const currentPrice = getAveragePrice(usdPriceBuffer);
+
+            // Check if it's time to evaluate sounds (00, 05, 10, ..., 55 minutes past the hour)
+            if (minutes % 5 === 0 && now - lastSoundCheckTime >= soundCheckInterval && currentPrice > 0 && initialBtcPriceUsd !== null) {
+                lastSoundCheckTime = now;
+                const priceChange = currentPrice - initialBtcPriceUsd;
+                const distanceToAth = allTimeHigh - currentPrice;
+
+                // Priority 1: All-time high related sounds (always exclusive)
+                if (currentPrice > allTimeHigh) {
+                    playSound('ath-reached-sound');
+                    isFirstSoundCheck = false; // Mark first check as done
+                    return; // Exclusive sound, no others play
+                } else if (distanceToAth <= 1000 && distanceToAth > 0) {
+                    playSound('ath-almost-there-sound');
+                    isFirstSoundCheck = false; // Mark first check as done
+                    return; // Exclusive sound
+                } else if (distanceToAth <= 5000 && distanceToAth > 1000) {
+                    playSound('ath-near-sound');
+                    isFirstSoundCheck = false; // Mark first check as done
+                    return; // Exclusive sound
+                }
+
+                // Special case: First check after page load and price < 90000
+                if (isFirstSoundCheck && currentPrice < 90000) {
+                    if (!hasPlayedCheapBitcoin) {
+                        playSound('cheap-bitcoin-sound');
+                        hasPlayedCheapBitcoin = true;
+                    }
+                    isFirstSoundCheck = false; // Mark first check as done
+                    return; // Only play cheap-bitcoin-sound, no other price sounds
+                }
+
+                // Priority 2: Price change sounds (normal rules apply after first check or if price >= 90000)
+                if (priceChange > 499) {
+                    playSound('nice-move-up-sound');
+                } else if (priceChange >= 1 && priceChange <= 499) {
+                    playSound('price-up-sound');
+                } else if (priceChange < -499) {
+                    playSound('swing-down-sound');
+                } else if (priceChange <= -1 && priceChange >= -499) {
+                    playSound('price-down-sound');
+                }
+
+                // Additional sound for price below 90000 (plays once, on top of other sounds, except on first check)
+                if (currentPrice < 90000 && !hasPlayedCheapBitcoin) {
+                    playSound('cheap-bitcoin-sound');
+                    hasPlayedCheapBitcoin = true;
+                }
+
+                isFirstSoundCheck = false; // Mark first check as done after this point
+            }
+        }
+
+        // Schedule sound checks every second to catch the 5-minute marks
+        setInterval(() => {
+            checkPriceForSounds();
+        }, 1000);
+
+        // Reset hasPlayedCheapBitcoin when price goes above 90000 again
+        setInterval(() => {
+            const currentPrice = getAveragePrice(usdPriceBuffer);
+            if (currentPrice >= 90000 && hasPlayedCheapBitcoin) {
+                hasPlayedCheapBitcoin = false;
+            }
+        }, 60000); // Check every minute
+        // Proof of work is life 
+    </script>
+</body>
+</html>
